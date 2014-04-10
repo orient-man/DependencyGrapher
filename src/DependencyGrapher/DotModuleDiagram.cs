@@ -7,7 +7,7 @@ using System.Text.RegularExpressions;
 
 namespace DependencyGrapher
 {
-    public class DotModuleDiagram
+    public class DotModuleDiagram : IDisposable
     {
         private readonly DependencyDiagramOptions options;
         private readonly string rootAssemblyPath;
@@ -185,6 +185,11 @@ namespace DependencyGrapher
             var assemblyName = module.GetName().Name;
             var postfix = assemblyName.Replace("Pincasso.", "");
             return postfix == "Core" ? "Core" : postfix.Replace(".Core", "");
+        }
+
+        public void Dispose()
+        {
+            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve -= OnReflectionOnlyAssemblyResolve;
         }
     }
 }

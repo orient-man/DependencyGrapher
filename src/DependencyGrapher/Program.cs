@@ -6,7 +6,8 @@ namespace DependencyGrapher
     {
         private static void Main(string[] args)
         {
-            File.WriteAllText(args[1], new DotModuleDiagram(args[0]).Draw());
+            using (var diagram = new DotModuleDiagram(args[0]))
+                File.WriteAllText(args[1], diagram.Draw());
         }
     }
 }
