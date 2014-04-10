@@ -9,34 +9,45 @@ namespace DependencyGrapher
 {
     public class DotModuleDiagram
     {
-        private readonly Regex moduleIncludeRegex = new Regex(@"^Pincasso\..*Core$");
-        private readonly Regex moduleExcludeRegex = new Regex(@"^Pincasso\.Migracja\.Core$");
+        private readonly DependencyDiagramOptions options;
+        private readonly string rootAssemblyPath;
+        private readonly string assemblyFolder;
+        private readonly Regex moduleIncludeRegex;
+        private readonly Regex moduleExcludeRegex;
 
         private readonly Dictionary<Assembly, Assembly[]> moduleMap =
             new Dictionary<Assembly, Assembly[]>();
 
-        private string assemblyPath;
-
-        public string Draw(string rootAssemblyPath, bool hideTransitiveReferences = false)
+        public DotModuleDiagram(string rootAssemblyPath, DependencyDiagramOptions options = null)
         {
-            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve +=
-                CurrentDomain_ReflectionOnlyAssemblyResolve;
+            this.options = options ?? new DependencyDiagramOptions();
+            this.rootAssemblyPath = rootAssemblyPath;
+            this.assemblyFolder = GetAssemblyPath(rootAssemblyPath);
 
-            var rootAssembly = Assembly.ReflectionOnlyLoadFrom(rootAssemblyPath);
-            assemblyPath = GetAssemblyPath(rootAssembly);
-            FindDependencies(rootAssembly);
+            if (!string.IsNullOrEmpty(this.options.AssemblyIncludeRegex))
+                moduleIncludeRegex = new Regex(this.options.AssemblyIncludeRegex);
 
-            if (hideTransitiveReferences)
+            if (!string.IsNullOrEmpty(this.options.AssemblyExcludeRegex))
+                moduleExcludeRegex = new Regex(this.options.AssemblyExcludeRegex);
+
+            AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += OnReflectionOnlyAssemblyResolve;
+        }
+
+        public string Draw()
+        {
+            FindDependencies(Assembly.ReflectionOnlyLoadFrom(rootAssemblyPath));
+
+            if (options.HideTransitiveReferences)
                 RemoveTransitiveReferences();
 
             return DrawModuleMap();
         }
 
-        Assembly CurrentDomain_ReflectionOnlyAssemblyResolve(object sender, ResolveEventArgs args)
+        private Assembly OnReflectionOnlyAssemblyResolve(object sender, ResolveEventArgs args)
         {
-            var fileName = assemblyPath + GetAssemblyName(args.Name);
+            var fileName = assemblyFolder + GetAssemblyName(args.Name);
             if (File.Exists(fileName))
-                return Assembly.ReflectionOnlyLoadFrom(assemblyPath + GetAssemblyName(args.Name));
+                return Assembly.ReflectionOnlyLoadFrom(assemblyFolder + GetAssemblyName(args.Name));
 
             return Assembly.ReflectionOnlyLoad(args.Name);
         }
@@ -51,7 +62,7 @@ namespace DependencyGrapher
                 .GetReferencedAssemblies()
                 .Where(o => IsModule(o.Name))
                 .OrderBy(o => o.Name)
-                .Select(o => Assembly.ReflectionOnlyLoadFrom(assemblyPath + GetAssemblyName(o.FullName)))
+                .Select(o => Assembly.ReflectionOnlyLoadFrom(assemblyFolder + GetAssemblyName(o.FullName)))
                 .ToArray();
 
             if (IsModule(name))
@@ -71,7 +82,11 @@ namespace DependencyGrapher
 
         private string GetAssemblyPath(Assembly assembly)
         {
-            var path = assembly.Location;
+            return GetAssemblyPath(assembly.Location);
+        }
+
+        private string GetAssemblyPath(string path)
+        {
             var idx = path.LastIndexOf(Path.DirectorySeparatorChar);
             if (idx < 0)
                 return "";
