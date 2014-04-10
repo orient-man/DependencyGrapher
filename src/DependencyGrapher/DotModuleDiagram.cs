@@ -22,7 +22,8 @@ namespace DependencyGrapher
         {
             this.options = options ?? new DependencyDiagramOptions();
             this.rootAssemblyPath = rootAssemblyPath;
-            this.assemblyFolder = GetAssemblyPath(rootAssemblyPath);
+
+            assemblyFolder = GetAssemblyFolder(rootAssemblyPath);
 
             if (!string.IsNullOrEmpty(this.options.AssemblyIncludeRegex))
                 moduleIncludeRegex = new Regex(this.options.AssemblyIncludeRegex);
@@ -31,6 +32,12 @@ namespace DependencyGrapher
                 moduleExcludeRegex = new Regex(this.options.AssemblyExcludeRegex);
 
             AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += OnReflectionOnlyAssemblyResolve;
+        }
+
+        private static string GetAssemblyFolder(string path)
+        {
+            var idx = path.LastIndexOf(Path.DirectorySeparatorChar);
+            return idx < 0 ? "" : path.Substring(0, idx + 1);
         }
 
         public string Draw()
@@ -43,15 +50,6 @@ namespace DependencyGrapher
             return DrawModuleMap();
         }
 
-        private Assembly OnReflectionOnlyAssemblyResolve(object sender, ResolveEventArgs args)
-        {
-            var fileName = assemblyFolder + GetAssemblyName(args.Name);
-            if (File.Exists(fileName))
-                return Assembly.ReflectionOnlyLoadFrom(assemblyFolder + GetAssemblyName(args.Name));
-
-            return Assembly.ReflectionOnlyLoad(args.Name);
-        }
-
         private void FindDependencies(Assembly module)
         {
             var name = module.GetName().Name;
@@ -61,8 +59,9 @@ namespace DependencyGrapher
             var dependencies = module
                 .GetReferencedAssemblies()
                 .Where(o => IsModule(o.Name))
-                .OrderBy(o => o.Name)
-                .Select(o => Assembly.ReflectionOnlyLoadFrom(assemblyFolder + GetAssemblyName(o.FullName)))
+                .Select(o => o.Name)
+                .OrderBy(o => o)
+                .Select(LoadAssembly)
                 .ToArray();
 
             if (IsModule(name))
@@ -74,24 +73,23 @@ namespace DependencyGrapher
             }
         }
 
-        private string GetAssemblyName(string fullName)
+        private Assembly OnReflectionOnlyAssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            return LoadAssembly(args.Name);
+        }
+
+        private Assembly LoadAssembly(string name)
+        {
+            var assemblyFile = assemblyFolder + GetAssemblyFileName(name);
+            return File.Exists(assemblyFile)
+                ? Assembly.ReflectionOnlyLoadFrom(assemblyFile)
+                : Assembly.ReflectionOnlyLoad(name);
+        }
+
+        private static string GetAssemblyFileName(string fullName)
         {
             var idx = fullName.IndexOf(',');
             return (idx < 0 ? fullName : fullName.Substring(0, idx)) + ".dll";
-        }
-
-        private string GetAssemblyPath(Assembly assembly)
-        {
-            return GetAssemblyPath(assembly.Location);
-        }
-
-        private string GetAssemblyPath(string path)
-        {
-            var idx = path.LastIndexOf(Path.DirectorySeparatorChar);
-            if (idx < 0)
-                return "";
-
-            return path.Substring(0, idx + 1);
         }
 
         private bool IsModule(string moduleName)
