@@ -12,8 +12,6 @@ namespace DependencyGrapher
         private readonly DependencyFinderOptions options;
         private readonly string rootAssemblyPath;
         private readonly string assemblyFolder;
-        private readonly Regex assemblyIncludeRegex;
-        private readonly Regex assemblyExcludeRegex;
 
         private readonly Dictionary<string, ModuleInfo> modules =
             new Dictionary<string, ModuleInfo>();
@@ -24,12 +22,6 @@ namespace DependencyGrapher
             this.rootAssemblyPath = rootAssemblyPath;
 
             assemblyFolder = GetAssemblyFolder(rootAssemblyPath);
-
-            if (!string.IsNullOrEmpty(this.options.AssemblyIncludeRegex))
-                assemblyIncludeRegex = new Regex(this.options.AssemblyIncludeRegex);
-
-            if (!string.IsNullOrEmpty(this.options.AssemblyExcludeRegex))
-                assemblyExcludeRegex = new Regex(this.options.AssemblyExcludeRegex);
 
             AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += OnReflectionOnlyAssemblyResolve;
         }
@@ -60,14 +52,14 @@ namespace DependencyGrapher
             var dependencies = assembly
                 .GetReferencedAssemblies()
                 .Select(o => o.Name)
-                .Where(IsModule)
+                .Where(IncludeModule)
                 .Select(LoadAssembly)
                 .Select(FindDependencies)
                 .Where(o => o != null)
                 .OrderBy(o => o.Name)
                 .ToArray();
 
-            if (IsModule(name))
+            if (IncludeModule(name))
             {
                 var module = new ModuleInfo(name)
                 {
@@ -81,16 +73,10 @@ namespace DependencyGrapher
             return null;
         }
 
-        private bool IsModule(string moduleName)
+        private bool IncludeModule(string moduleName)
         {
-            var include = true;
-            if (assemblyIncludeRegex != null)
-                include = assemblyIncludeRegex.IsMatch(moduleName);
-
-            if (!include)
-                return false;
-
-            return assemblyExcludeRegex == null || !assemblyExcludeRegex.IsMatch(moduleName);
+            return Regex.IsMatch(moduleName, options.AssemblyIncludeRegex ?? ".*") &&
+                   !Regex.IsMatch(moduleName, options.TypeExcludeRegex ?? @"^System\..*");
         }
 
         private IEnumerable<string> GetTypes(Assembly module)
