@@ -24,22 +24,22 @@ namespace DependencyGrapher
                     v => finderOptions.RemoveTransitiveReferences = v != null
                 },
                 {
-                    "asmInclude=",
+                    "include-assembly=",
                     "Regex for including referenced assemblies (default: all)",
                     v => finderOptions.AssemblyIncludeRegex = v
                 },
                 {
-                    "asmExclude=",
-                    "Regex for excluding referenced assemblies (default: none)",
+                    "exclude-assembly=",
+                    "Regex for excluding referenced assemblies (default: System)",
                     v => finderOptions.AssemblyExcludeRegex = v
                 },
                 {
-                    "typeInclude=",
+                    "include-type=",
                     "Regex for including types (default: none)",
                     v => finderOptions.TypeIncludeRegex = v
                 },
                 {
-                    "typeExclude=",
+                    "exclude-type=",
                     "Regex for excluding types (default: all)",
                     v => finderOptions.TypeExcludeRegex = v
                 },
