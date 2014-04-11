@@ -18,7 +18,7 @@ namespace DependencyGrapher
                         (current, dep) => current + FormatRelation(m.Name, dep.Name));
             }
 
-            return "digraph Pincasso {\n" +
+            return "digraph ModuleDiagram {\n" +
                    "\trankdir=LR\n" +
                    "\tnode [shape=plaintext]\n" +
                    "\tedge [arrowsize=0.75 fontsize=14 fontcolor=blue]\n\n" +
