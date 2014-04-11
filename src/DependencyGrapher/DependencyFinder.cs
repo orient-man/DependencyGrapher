@@ -14,7 +14,6 @@ namespace DependencyGrapher
         private readonly string assemblyFolder;
         private readonly Regex assemblyIncludeRegex;
         private readonly Regex assemblyExcludeRegex;
-        private readonly Regex interfaceExcludeRegex;
 
         private readonly Dictionary<string, ModuleInfo> modules =
             new Dictionary<string, ModuleInfo>();
@@ -31,9 +30,6 @@ namespace DependencyGrapher
 
             if (!string.IsNullOrEmpty(this.options.AssemblyExcludeRegex))
                 assemblyExcludeRegex = new Regex(this.options.AssemblyExcludeRegex);
-
-            if (!string.IsNullOrEmpty(this.options.InterfaceIncludeRegex))
-                interfaceExcludeRegex = new Regex(this.options.InterfaceIncludeRegex);
 
             AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += OnReflectionOnlyAssemblyResolve;
         }
@@ -76,7 +72,7 @@ namespace DependencyGrapher
                 var module = new ModuleInfo(name)
                 {
                     Dependencies = dependencies,
-                    DomainObjects = GetDomainObjects(assembly).ToArray()
+                    Types = GetTypes(assembly).ToArray()
                 };
                 modules[name] = module;
                 return module;
@@ -97,24 +93,38 @@ namespace DependencyGrapher
             return assemblyExcludeRegex == null || !assemblyExcludeRegex.IsMatch(moduleName);
         }
 
-        private IEnumerable<string> GetDomainObjects(Assembly module)
+        private IEnumerable<string> GetTypes(Assembly module)
         {
             return module.GetTypes()
-                .Where(IsDomainObject)
+                .Where(IncludeType)
                 .OrderBy(o => o.Name)
                 .Select(o => o.Name)
                 .DefaultIfEmpty();
         }
 
-        private bool IsDomainObject(Type type)
+        private bool IncludeType(Type type)
         {
-            if (!type.IsClass)
-                return false;
+            if (Regex.IsMatch(type.Name, options.TypeIncludeRegex ?? "-") &&
+                !Regex.IsMatch(type.Name, options.TypeExcludeRegex ?? "-"))
+                return true;
 
-            if (interfaceExcludeRegex == null)
-                return false;
+            return GetParentTypes(type).Any(IncludeType);
+        }
 
-            return type.GetInterfaces().Any(o => interfaceExcludeRegex.IsMatch(o.Name));
+        private static IEnumerable<Type> GetParentTypes(Type type)
+        {
+            if (type == null || type.BaseType == null)
+                yield break;
+
+            foreach (var i in type.GetInterfaces())
+                yield return i;
+
+            var currentBaseType = type.BaseType;
+            while (currentBaseType != null)
+            {
+                yield return currentBaseType;
+                currentBaseType = currentBaseType.BaseType;
+            }
         }
 
         private Assembly OnReflectionOnlyAssemblyResolve(object sender, ResolveEventArgs args)

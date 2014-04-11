@@ -34,9 +34,14 @@ namespace DependencyGrapher
                     v => finderOptions.AssemblyExcludeRegex = v
                 },
                 {
-                    "interfaceInclude=",
-                    "Regex for including domain objects (default: none)",
-                    v => finderOptions.InterfaceIncludeRegex = v
+                    "typeInclude=",
+                    "Regex for including types (default: none)",
+                    v => finderOptions.TypeIncludeRegex = v
+                },
+                {
+                    "typeExclude=",
+                    "Regex for excluding types (default: all)",
+                    v => finderOptions.TypeExcludeRegex = v
                 },
             };
 

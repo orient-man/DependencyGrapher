@@ -11,7 +11,7 @@ namespace DependencyGrapher
             var relations = "";
             foreach (var m in moduleMap.OrderBy(o => o.Name))
             {
-                modules += FormatModule(m.Name, m.DomainObjects);
+                modules += FormatModule(m.Name, m.Types);
                 relations = m.Dependencies
                     .Aggregate(
                         relations,
@@ -25,28 +25,28 @@ namespace DependencyGrapher
                    modules + "\n" + relations + "}";
         }
 
-        private static string FormatModule(string name, string[] domainObjects)
+        private static string FormatModule(string name, string[] types)
         {
             return "\t" + name.Replace(".", "") + " [label=<\n" +
                    "<table border='0' cellborder='1' cellspacing='0' cellpadding='2'>\n" +
                    "\t<tr><td bgcolor='lightblue'>" + name + "</td></tr>\n" +
-                   FormatDomainObject(domainObjects) +
+                   FormatTypes(types) +
                    "</table>>];\n";
         }
 
-        private static string FormatDomainObject(string[] domainObjects)
+        private static string FormatTypes(string[] types)
         {
-            if (domainObjects.Length == 0)
+            if (types.Length == 0)
                 return "";
 
             return "\t<tr><td><table border='0' cellborder='0' cellspacing='0' cellpadding='0'>\n" +
                    "\t\t<tr><td align='left'>" +
-                   domainObjects
+                   types
                        .Aggregate(
-                           (current, domainObject) =>
+                           (current, type) =>
                                current +
                                "</td></tr>\n\t\t<tr><td align='left'>" +
-                               domainObject) +
+                               type) +
                    "</td></tr>\n\t</table></td></tr>\n";
         }
 
