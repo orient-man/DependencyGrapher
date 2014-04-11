@@ -12,8 +12,9 @@ namespace DependencyGrapher
         private readonly DependencyDiagramOptions options;
         private readonly string rootAssemblyPath;
         private readonly string assemblyFolder;
-        private readonly Regex moduleIncludeRegex;
-        private readonly Regex moduleExcludeRegex;
+        private readonly Regex assemblyIncludeRegex;
+        private readonly Regex assemblyExcludeRegex;
+        private readonly Regex interfaceExcludeRegex;
 
         private readonly Dictionary<Assembly, Assembly[]> moduleMap =
             new Dictionary<Assembly, Assembly[]>();
@@ -26,10 +27,13 @@ namespace DependencyGrapher
             assemblyFolder = GetAssemblyFolder(rootAssemblyPath);
 
             if (!string.IsNullOrEmpty(this.options.AssemblyIncludeRegex))
-                moduleIncludeRegex = new Regex(this.options.AssemblyIncludeRegex);
+                assemblyIncludeRegex = new Regex(this.options.AssemblyIncludeRegex);
 
             if (!string.IsNullOrEmpty(this.options.AssemblyExcludeRegex))
-                moduleExcludeRegex = new Regex(this.options.AssemblyExcludeRegex);
+                assemblyExcludeRegex = new Regex(this.options.AssemblyExcludeRegex);
+
+            if (!string.IsNullOrEmpty(this.options.InterfaceIncludeRegex))
+                interfaceExcludeRegex = new Regex(this.options.InterfaceIncludeRegex);
 
             AppDomain.CurrentDomain.ReflectionOnlyAssemblyResolve += OnReflectionOnlyAssemblyResolve;
         }
@@ -94,8 +98,8 @@ namespace DependencyGrapher
 
         private bool IsModule(string moduleName)
         {
-            return moduleIncludeRegex.IsMatch(moduleName) &&
-                   !moduleExcludeRegex.IsMatch(moduleName);
+            return assemblyIncludeRegex.IsMatch(moduleName) &&
+                   !assemblyExcludeRegex.IsMatch(moduleName);
         }
 
         private void RemoveTransitiveReferences()
@@ -141,16 +145,24 @@ namespace DependencyGrapher
                    modules + "\n" + relations + "}";
         }
 
-        private static IEnumerable<string> GetDomainObjects(Assembly module)
+        private IEnumerable<string> GetDomainObjects(Assembly module)
         {
             return module.GetTypes()
-                .Where(
-                    o => o
-                        .GetInterfaces()
-                        .Any(i => i.Name.Contains("IPincassoDomainObject")))
+                .Where(IsDomainObject)
                 .OrderBy(o => o.Name)
-                .Select(o => o.Name.Substring(1))
+                .Select(o => o.Name)
                 .DefaultIfEmpty();
+        }
+
+        private bool IsDomainObject(Type type)
+        {
+            if (!type.IsClass)
+                return false;
+
+            if (interfaceExcludeRegex == null)
+                return false;
+
+            return type.GetInterfaces().Any(o => interfaceExcludeRegex.IsMatch(o.Name));
         }
 
         private static string FormatModule(
