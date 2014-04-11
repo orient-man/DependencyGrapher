@@ -11,12 +11,11 @@ namespace DependencyGrapher
             var relations = "";
             foreach (var m in moduleMap.OrderBy(o => o.Name))
             {
-                var moduleName = FormatModuleName(m.Name);
-                modules += FormatModule(moduleName, m.DomainObjects);
+                modules += FormatModule(m.Name, m.DomainObjects);
                 relations = m.Dependencies
                     .Aggregate(
                         relations,
-                        (current, dep) => current + FormatRelation(moduleName, dep));
+                        (current, dep) => current + FormatRelation(m.Name, dep.Name));
             }
 
             return "digraph Pincasso {\n" +
@@ -28,7 +27,7 @@ namespace DependencyGrapher
 
         private static string FormatModule(string name, string[] domainObjects)
         {
-            return "\t" + name + " [label=<\n" +
+            return "\t" + name.Replace(".", "") + " [label=<\n" +
                    "<table border='0' cellborder='1' cellspacing='0' cellpadding='2'>\n" +
                    "\t<tr><td bgcolor='lightblue'>" + name + "</td></tr>\n" +
                    FormatDomainObject(domainObjects) +
@@ -51,15 +50,9 @@ namespace DependencyGrapher
                    "</td></tr>\n\t</table></td></tr>\n";
         }
 
-        private static string FormatRelation(string name, ModuleInfo dep)
+        private static string FormatRelation(string name, string depName)
         {
-            return "\t" + name + " -> " + FormatModuleName(dep.Name) + ";\n";
-        }
-
-        private static string FormatModuleName(string assemblyName)
-        {
-            // TODO: formatting
-            return assemblyName;
+            return "\t" + name.Replace(".", "") + " -> " + depName.Replace(".", "") + ";\n";
         }
     }
 }
