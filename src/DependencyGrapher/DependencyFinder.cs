@@ -85,6 +85,7 @@ namespace DependencyGrapher
                 .Where(IncludeType)
                 .OrderBy(o => o.Name)
                 .Select(o => o.Name)
+                .Distinct()
                 .DefaultIfEmpty();
         }
 
