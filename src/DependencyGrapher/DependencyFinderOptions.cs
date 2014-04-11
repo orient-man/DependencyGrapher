@@ -1,13 +1,13 @@
 namespace DependencyGrapher
 {
-    public class DependencyDiagramOptions
+    public class DependencyFinderOptions
     {
-        public bool HideTransitiveReferences { get; set; }
+        public bool RemoveTransitiveReferences { get; set; }
         public string AssemblyIncludeRegex { get; set; }
         public string AssemblyExcludeRegex { get; set; }
         public string InterfaceIncludeRegex { get; set; }
 
-        public DependencyDiagramOptions()
+        public DependencyFinderOptions()
         {
             AssemblyIncludeRegex = @"^Pincasso\..*Core$";
             AssemblyExcludeRegex = @"^Pincasso\.Migracja\.Core$";

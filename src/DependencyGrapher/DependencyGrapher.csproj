@@ -44,8 +44,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DependencyDiagramOptions.cs" />
+    <Compile Include="DependencyFinderOptions.cs" />
+    <Compile Include="DependencyFinder.cs" />
     <Compile Include="DotModuleDiagram.cs" />
+    <Compile Include="ModuleInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
