@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using NDesk.Options;
 
 namespace DependencyGrapher
@@ -7,23 +8,77 @@ namespace DependencyGrapher
     {
         private static void Main(string[] args)
         {
-            string inputFile = "";
-            string outputFile = "";
+            var showHelp = false;
+            var inputFile = "";
+            var outputFile = "";
             var finderOptions = new DependencyFinderOptions();
+
             var cmdLineOptions = new OptionSet
             {
-                { "i=|input=", v => inputFile = v },
-                { "o=|output=", v => outputFile = v },
-                { "hideTransitive", v => finderOptions.RemoveTransitiveReferences = v != null },
-                { "asmInclude=", v => finderOptions.AssemblyIncludeRegex = v },
-                { "asmExclude=", v => finderOptions.AssemblyExcludeRegex = v },
-                { "interfaceInclude=", v => finderOptions.InterfaceIncludeRegex = v },
+                { "h|help", "show this message and exit", v => showHelp = v != null },
+                { "i=|input=", "input root assembly", v => inputFile = v },
+                { "o=|output=", "output dot diagram file", v => outputFile = v },
+                {
+                    "hideTransitive",
+                    "hide transitive dependencies (default: false)",
+                    v => finderOptions.RemoveTransitiveReferences = v != null
+                },
+                {
+                    "asmInclude=",
+                    "Regex for including referenced assemblies (default: all)",
+                    v => finderOptions.AssemblyIncludeRegex = v
+                },
+                {
+                    "asmExclude=",
+                    "Regex for excluding referenced assemblies (default: none)",
+                    v => finderOptions.AssemblyExcludeRegex = v
+                },
+                {
+                    "interfaceInclude=",
+                    "Regex for including domain objects (default: none)",
+                    v => finderOptions.InterfaceIncludeRegex = v
+                },
             };
 
-            cmdLineOptions.Parse(args);
+            try
+            {
+                cmdLineOptions.Parse(args);
+            }
+            catch (OptionException e)
+            {
+                Console.Write("DependencyGrapher: ");
+                Console.WriteLine(e.Message);
+                Console.WriteLine("Try `DependencyGrapher --help' for more information.");
+                return;
+            }
 
+            if (showHelp || string.IsNullOrEmpty(inputFile))
+            {
+                ShowHelp(cmdLineOptions);
+                return;
+            }
+
+            var diagram = DrawDependeciesGraph(inputFile, finderOptions);
+            if (string.IsNullOrEmpty(outputFile))
+                Console.Write(diagram);
+            else
+                File.WriteAllText(outputFile, diagram);
+        }
+
+        private static void ShowHelp(OptionSet cmdLineOptions)
+        {
+            Console.WriteLine("Usage: DependencyGrapher [OPTIONS]+ message");
+            Console.WriteLine();
+            Console.WriteLine("Options:");
+            cmdLineOptions.WriteOptionDescriptions(Console.Out);
+        }
+
+        private static string DrawDependeciesGraph(
+            string inputFile,
+            DependencyFinderOptions finderOptions)
+        {
             using (var finder = new DependencyFinder(inputFile, finderOptions))
-                File.WriteAllText(outputFile, new DotModuleDiagram().Draw(finder.FindDependencies()));
+                return new DotModuleDiagram().Draw(finder.FindDependencies());
         }
     }
 }
