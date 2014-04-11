@@ -72,7 +72,7 @@ namespace DependencyGrapher
 
         private static void ShowHelp(OptionSet cmdLineOptions)
         {
-            Console.WriteLine("Usage: DependencyGrapher [OPTIONS]+ message");
+            Console.WriteLine("Usage: DependencyGrapher [OPTIONS]+");
             Console.WriteLine();
             Console.WriteLine("Options:");
             cmdLineOptions.WriteOptionDescriptions(Console.Out);
