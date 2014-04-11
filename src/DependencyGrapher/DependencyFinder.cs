@@ -76,7 +76,7 @@ namespace DependencyGrapher
         private bool IncludeModule(string moduleName)
         {
             return Regex.IsMatch(moduleName, options.AssemblyIncludeRegex ?? ".*") &&
-                   !Regex.IsMatch(moduleName, options.TypeExcludeRegex ?? @"^System\..*");
+                   !Regex.IsMatch(moduleName, options.AssemblyExcludeRegex ?? @"^System\..*");
         }
 
         private IEnumerable<string> GetTypes(Assembly module)
