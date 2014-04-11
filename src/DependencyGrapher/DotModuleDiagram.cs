@@ -58,8 +58,8 @@ namespace DependencyGrapher
 
         private static string FormatModuleName(string assemblyName)
         {
-            var postfix = assemblyName.Replace("Pincasso.", "");
-            return postfix == "Core" ? "Core" : postfix.Replace(".Core", "");
+            // TODO: formatting
+            return assemblyName;
         }
     }
 }
