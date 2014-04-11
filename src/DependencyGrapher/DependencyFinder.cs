@@ -61,8 +61,7 @@ namespace DependencyGrapher
             if (modules.ContainsKey(name))
                 return modules[name];
 
-            var module = new ModuleInfo(name);
-            module.Dependencies = assembly
+            var dependencies = assembly
                 .GetReferencedAssemblies()
                 .Select(o => o.Name)
                 .Where(IsModule)
@@ -74,11 +73,16 @@ namespace DependencyGrapher
 
             if (IsModule(name))
             {
-                module.DomainObjects = GetDomainObjects(assembly).ToArray();
+                var module = new ModuleInfo(name)
+                {
+                    Dependencies = dependencies,
+                    DomainObjects = GetDomainObjects(assembly).ToArray()
+                };
                 modules[name] = module;
+                return module;
             }
 
-            return module;
+            return null;
         }
 
         private bool IsModule(string moduleName)
