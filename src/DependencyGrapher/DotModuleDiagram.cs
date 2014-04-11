@@ -26,15 +26,21 @@ namespace DependencyGrapher
                    modules + "\n" + relations + "}";
         }
 
-        private static string FormatModule(
-            string name,
-            IEnumerable<string> domainObjects)
+        private static string FormatModule(string name, string[] domainObjects)
         {
             return "\t" + name + " [label=<\n" +
                    "<table border='0' cellborder='1' cellspacing='0' cellpadding='2'>\n" +
-                   "\t<tr><td bgcolor='lightblue'>" +
-                   name + "</td></tr>\n" +
-                   "\t<tr><td><table border='0' cellborder='0' cellspacing='0' cellpadding='0'>\n" +
+                   "\t<tr><td bgcolor='lightblue'>" + name + "</td></tr>\n" +
+                   FormatDomainObject(domainObjects) +
+                   "</table>>];\n";
+        }
+
+        private static string FormatDomainObject(string[] domainObjects)
+        {
+            if (domainObjects.Length == 0)
+                return "";
+
+            return "\t<tr><td><table border='0' cellborder='0' cellspacing='0' cellpadding='0'>\n" +
                    "\t\t<tr><td align='left'>" +
                    domainObjects
                        .Aggregate(
@@ -42,8 +48,7 @@ namespace DependencyGrapher
                                current +
                                "</td></tr>\n\t\t<tr><td align='left'>" +
                                domainObject) +
-                   "</td></tr>\n\t</table></td></tr>\n" +
-                   "</table>>];\n";
+                   "</td></tr>\n\t</table></td></tr>\n";
         }
 
         private static string FormatRelation(string name, ModuleInfo dep)
