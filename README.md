@@ -3,6 +3,8 @@ DependencyGrapher
 
 Automatic architecture diagrams for .NET applications.
 
+![Modules and entities](CQRSEntities.jpg "Modules and entities")
+
 Output file format is [DOT](http://en.wikipedia.org/wiki/DOT_(graph_description_language)). Use [Graphviz](http://www.graphviz.org/) to convert it to image.
 
 ## Usage
