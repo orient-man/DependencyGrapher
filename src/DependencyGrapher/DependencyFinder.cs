@@ -87,8 +87,14 @@ namespace DependencyGrapher
 
         private bool IsModule(string moduleName)
         {
-            return assemblyIncludeRegex.IsMatch(moduleName) &&
-                   !assemblyExcludeRegex.IsMatch(moduleName);
+            var include = true;
+            if (assemblyIncludeRegex != null)
+                include = assemblyIncludeRegex.IsMatch(moduleName);
+
+            if (!include)
+                return false;
+
+            return assemblyExcludeRegex == null || !assemblyExcludeRegex.IsMatch(moduleName);
         }
 
         private IEnumerable<string> GetDomainObjects(Assembly module)
